@@ -34,4 +34,20 @@ class Question {
     if (answerType == 'MCQ') 'options': options.map((t) => {'text': t}).toList(),
     'required': required,
   };
+
+  Question copyWith({
+    String? id,
+    String? questionText,
+    String? answerType,
+    List<String>? options,
+    bool? required,
+  }) {
+    return Question(
+      id: id ?? this.id,
+      questionText: questionText ?? this.questionText,
+      answerType: answerType ?? this.answerType,
+      options: options ?? List<String>.from(this.options),
+      required: required ?? this.required,
+    );
+  }
 }

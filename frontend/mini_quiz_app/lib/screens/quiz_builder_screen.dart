@@ -11,42 +11,152 @@ class QuizBuilderScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Quiz Builder')),
+      backgroundColor: const Color(0xFFF6F7FB),
+      appBar: AppBar(
+        title: const Text(
+          'Quiz Builder',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        centerTitle: true,
+        elevation: 0,
+      ),
+
+      /// ➕ Floating Create Button
+      floatingActionButton: FloatingActionButton.extended(
+        icon: const Icon(Icons.add),
+        label: const Text('Create Quiz'),
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => QuizEditorScreen()),
+        ),
+      ),
+
       body: BlocBuilder<QuizzesBloc, QuizzesState>(
         builder: (context, state) {
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(children: [
-              ElevatedButton.icon(
-                icon: const Icon(Icons.add),
-                label: const Text('Create New Quiz'),
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => QuizEditorScreen())),
+          if (state is QuizzesLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (state is QuizzesError) {
+            return Center(
+              child: Text(
+                'Error: ${state.message}',
+                style: const TextStyle(color: Colors.red),
               ),
-              const SizedBox(height: 16),
-              if (state is QuizzesLoading) const CircularProgressIndicator(),
-              if (state is QuizzesLoaded)
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: state.quizzes.length,
-                    itemBuilder: (context, i) {
-                      final q = state.quizzes[i];
-                      return ListTile(
-                        title: Text(q.title),
-                        subtitle: Text(q.description ?? ''),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (_) => QuizEditorScreen(existingQuiz: q)));
-                          },
-                        ),
-                      );
-                    },
-                  ),
+            );
+          }
+
+          if (state is QuizzesLoaded) {
+            if (state.quizzes.isEmpty) {
+              return const Center(
+                child: Text(
+                  'No quizzes created yet',
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
                 ),
-              if (state is QuizzesError) Text('Error: ${state.message}'),
-            ]),
-          );
+              );
+            }
+
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: state.quizzes.length,
+              itemBuilder: (context, i) {
+                final Quiz q = state.quizzes[i];
+
+                return _QuizCard(
+                  quiz: q,
+                  onEdit: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => QuizEditorScreen(existingQuiz: q),
+                      ),
+                    );
+                  },
+                );
+              },
+            );
+          }
+
+          return const SizedBox.shrink();
         },
+      ),
+    );
+  }
+}
+
+class _QuizCard extends StatelessWidget {
+  final Quiz quiz;
+  final VoidCallback onEdit;
+
+  const _QuizCard({
+    required this.quiz,
+    required this.onEdit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 6,
+      margin: const EdgeInsets.only(bottom: 14),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onEdit,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              /// Left Icon
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.quiz, color: Colors.blue),
+              ),
+
+              const SizedBox(width: 16),
+
+              /// Title & Description
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      quiz.title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (quiz.description != null &&
+                        quiz.description!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          quiz.description!,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+
+              /// Edit Icon
+              IconButton(
+                icon: const Icon(Icons.edit_rounded),
+                onPressed: onEdit,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

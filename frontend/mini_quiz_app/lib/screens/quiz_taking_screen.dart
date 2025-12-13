@@ -22,75 +22,181 @@ class QuizTakingScreen extends StatelessWidget {
 
 class _QuizTakingView extends StatelessWidget {
   const _QuizTakingView({super.key});
+
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<QuizTakeCubit>();
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Take Quiz')),
+      backgroundColor: const Color(0xFFF6F7FB),
+      appBar: AppBar(
+        title: const Text(
+          'Take Quiz',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        centerTitle: true,
+        elevation: 0,
+      ),
       body: BlocConsumer<QuizTakeCubit, dynamic>(
         listener: (context, state) {
           if (state.error != null) {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.error)));
+            ScaffoldMessenger.of(context)
+                .showSnackBar(SnackBar(content: Text(state.error)));
             cubit.clearError();
           }
+
           if (state.success == true) {
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SuccessScreen()));
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const SuccessScreen()),
+            );
           }
         },
         builder: (context, state) {
-          if (state.loading == true) return const Center(child: CircularProgressIndicator());
+          if (state.loading == true) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
           final Quiz? quiz = state.quiz;
-          if (quiz == null) return const Center(child: Text('Quiz not found'));
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: ListView(
-              children: [
-                Text(quiz.title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                if (quiz.description != null) Text(quiz.description!),
-                const SizedBox(height: 12),
-                ...quiz.questions.map((q) {
-                  if (q.answerType == 'ShortText') {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: TextFormField(
-                        decoration: InputDecoration(labelText: q.questionText, border: const OutlineInputBorder()),
-                        onChanged: (v) => cubit.setAnswer(q.id!, v),
+          if (quiz == null) {
+            return const Center(child: Text('Quiz not found'));
+          }
+
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              /// Quiz Header
+              Card(
+                elevation: 6,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18)),
+                child: Padding(
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        quiz.title,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    );
-                  } else {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(q.questionText),
-                          const SizedBox(height: 6),
-                          ...List.generate(q.options.length, (i) {
-                            final optText = q.options[i];
-                            return RadioListTile<int>(
-                              title: Text(optText),
-                              value: i,
-                              groupValue: state.answers[q.id],
-                              onChanged: (v) => cubit.setAnswer(q.id!, v),
-                            );
-                          })
-                        ],
-                      ),
-                    );
-                  }
-                }).toList(),
-                const SizedBox(height: 12),
-                state.submitting == true ? const Center(child: CircularProgressIndicator()) : ElevatedButton(
-                  onPressed: () => cubit.submit(),
-                  child: const Padding(padding: EdgeInsets.symmetric(vertical: 12.0), child: Text('Submit')),
+                      if (quiz.description != null &&
+                          quiz.description!.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            quiz.description!,
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 12),
-                TextButton(
-                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ResponseViewerScreen(quizId: quiz.id!))),
-                  child: const Text('Admin: View Responses'),
-                )
-              ],
-            ),
+              ),
+
+              const SizedBox(height: 20),
+
+              /// Questions
+              ...quiz.questions.map((q) {
+                return Card(
+                  elevation: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          q.questionText,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
+                        /// Short Text
+                        if (q.answerType == 'ShortText')
+                          TextFormField(
+                            decoration: InputDecoration(
+                              hintText: 'Your answer',
+                              filled: true,
+                              fillColor: Colors.grey.shade100,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                            onChanged: (v) =>
+                                cubit.setAnswer(q.id!, v),
+                          ),
+
+                        /// MCQ
+                        if (q.answerType == 'MCQ')
+                          Column(
+                            children: List.generate(q.options.length, (i) {
+                              final optText = q.options[i];
+                              return RadioListTile<int>(
+                                value: i,
+                                groupValue: state.answers[q.id],
+                                title: Text(optText),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                onChanged: (v) =>
+                                    cubit.setAnswer(q.id!, v),
+                              );
+                            }),
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+
+              const SizedBox(height: 12),
+
+              /// Submit Button
+              state.submitting == true
+                  ? const Center(child: CircularProgressIndicator())
+                  : ElevatedButton(
+                onPressed: cubit.submit,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: const Text(
+                  'Submit Quiz',
+                  style: TextStyle(fontSize: 16),
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              /// Admin Link
+              TextButton.icon(
+                icon: const Icon(Icons.admin_panel_settings),
+                label: const Text('Admin: View Responses'),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          ResponseViewerScreen(quizId: quiz.id!),
+                    ),
+                  );
+                },
+              ),
+            ],
           );
         },
       ),

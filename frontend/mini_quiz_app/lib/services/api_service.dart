@@ -4,7 +4,7 @@ import '../models/quiz.dart';
 class ApiService {
   final Dio dio;
 
-  ApiService({String baseUrl = 'http://10.192.34.16:4000/api'}) : dio = Dio(BaseOptions(baseUrl: baseUrl));
+  ApiService({String baseUrl = 'http://192.168.1.2:4000/api'}) : dio = Dio(BaseOptions(baseUrl: baseUrl));
 
   Future<List<Quiz>> fetchQuizzes() async {
     final res = await dio.get('/quizzes');

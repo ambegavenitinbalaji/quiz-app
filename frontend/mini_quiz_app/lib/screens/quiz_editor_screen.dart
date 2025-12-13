@@ -98,10 +98,15 @@ class _QuizEditorViewState extends State<_QuizEditorView> {
                     child: Padding(
                       padding: const EdgeInsets.all(12.0),
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        TextField(
+                        TextFormField(
+                          initialValue: q.questionText,
                           decoration: const InputDecoration(labelText: 'Question Text'),
-                          onChanged: (v) => cubit.updateQuestionAt(idx, Question(id: q.id, questionText: v, answerType: q.answerType, options: q.options, required: q.required)),
-                          controller: TextEditingController(text: q.questionText),
+                          onChanged: (v) {
+                            cubit.updateQuestionAt(
+                              idx,
+                              q.copyWith(questionText: v),
+                            );
+                          },
                         ),
                         const SizedBox(height: 8),
                         Row(

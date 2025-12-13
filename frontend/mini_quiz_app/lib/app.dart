@@ -18,6 +18,7 @@ class MyApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
+        debugShowCheckedModeBanner: false,
         title: 'Mini Quiz App',
         theme: ThemeData(
           primarySwatch: Colors.indigo,
